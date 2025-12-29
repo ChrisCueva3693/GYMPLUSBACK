@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/membresias")
@@ -36,17 +37,20 @@ public class MembresiaController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEV')")
     public ResponseEntity<MembresiaResponseDto> crear(@Valid @RequestBody MembresiaRequestDto dto) {
         MembresiaResponseDto response = membresiaService.crear(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEV')")
     public MembresiaResponseDto actualizar(@PathVariable Long id, @Valid @RequestBody MembresiaRequestDto dto) {
         return membresiaService.actualizar(id, dto);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEV')")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         membresiaService.eliminar(id);
         return ResponseEntity.noContent().build();

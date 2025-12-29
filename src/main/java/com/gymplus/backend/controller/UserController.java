@@ -16,7 +16,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/usuarios")
@@ -36,19 +38,29 @@ public class UserController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEV')")
     public ResponseEntity<UsuarioResponseDto> crear(@Valid @RequestBody UsuarioCreateUpdateDto dto) {
         UsuarioResponseDto response = usuarioService.crear(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEV')")
     public UsuarioResponseDto actualizar(@PathVariable Long id, @Valid @RequestBody UsuarioCreateUpdateDto dto) {
         return usuarioService.actualizar(id, dto);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEV')")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         usuarioService.eliminar(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/rol")
+    @PreAuthorize("hasRole('DEV')")
+    public ResponseEntity<Void> cambiarRol(@PathVariable Long id, @RequestBody Set<String> roles) {
+        usuarioService.cambiarRol(id, roles);
+        return ResponseEntity.ok().build();
     }
 }

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/ventas")
@@ -36,17 +37,20 @@ public class VentaController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEV')")
     public ResponseEntity<VentaResponseDto> crear(@Valid @RequestBody VentaRequestDto dto) {
         VentaResponseDto response = ventaService.crear(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEV')")
     public VentaResponseDto actualizar(@PathVariable Long id, @Valid @RequestBody VentaRequestDto dto) {
         return ventaService.actualizar(id, dto);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEV')")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         ventaService.eliminar(id);
         return ResponseEntity.noContent().build();

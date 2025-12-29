@@ -16,4 +16,6 @@ public interface UsuarioService {
     UsuarioResponseDto actualizar(Long id, UsuarioCreateUpdateDto dto);
 
     void eliminar(Long id);
+
+    void cambiarRol(Long id, java.util.Set<String> roles);
 }

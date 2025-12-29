@@ -1,0 +1,33 @@
+Note: Unnecessary use of -X or --request, POST is already inferred.
+* Uses proxy env variable NO_PROXY == '*.azureedge.net'
+* Host localhost:8080 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying [::1]:8080...
+* Connected to localhost (::1) port 8080
+> POST /auth/register HTTP/1.1
+> Host: localhost:8080
+> User-Agent: curl/8.7.1
+> Accept: */*
+> Content-Type: application/json
+> Content-Length: 232
+> 
+} [232 bytes data]
+* upload completely sent off: 232 bytes
+100   232    0     0  100   232      0    191  0:00:01  0:00:01 --:--:--   191< HTTP/1.1 201 
+< X-Content-Type-Options: nosniff
+< X-XSS-Protection: 0
+< Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+< Pragma: no-cache
+< Expires: 0
+< X-Frame-Options: DENY
+< Content-Type: application/json
+< Transfer-Encoding: chunked
+< Date: Mon, 08 Dec 2025 17:17:00 GMT
+< 
+{ [267 bytes data]
+100   492    0   260  100   232    200    179  0:00:01  0:00:01 --:--:--   380
+* Connection #0 to host localhost left intact
+{"id":3,"idGimnasio":1,"idSucursalPorDefecto":1,"nombre":"Test","apellido":"User","email":"testuser_1765214218@example.com","telefono":"1234567890","username":"testuser_1765214218","activo":true,"fechaRegistro":"2025-12-08T12:16:59.860532","roles":["CLIENTE"]}

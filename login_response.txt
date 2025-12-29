@@ -1,0 +1,33 @@
+Note: Unnecessary use of -X or --request, POST is already inferred.
+* Uses proxy env variable NO_PROXY == '*.azureedge.net'
+* Host localhost:8080 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying [::1]:8080...
+* Connected to localhost (::1) port 8080
+> POST /auth/login HTTP/1.1
+> Host: localhost:8080
+> User-Agent: curl/8.7.1
+> Accept: */*
+> Content-Type: application/json
+> Content-Length: 68
+> 
+} [68 bytes data]
+* upload completely sent off: 68 bytes
+< HTTP/1.1 200 
+< X-Content-Type-Options: nosniff
+< X-XSS-Protection: 0
+< Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+< Pragma: no-cache
+< Expires: 0
+< X-Frame-Options: DENY
+< Content-Type: application/json
+< Transfer-Encoding: chunked
+< Date: Mon, 08 Dec 2025 17:17:01 GMT
+< 
+{ [303 bytes data]
+100   364    0   296  100    68    409     94 --:--:-- --:--:-- --:--:--   502100   364    0   296  100    68    408     93 --:--:-- --:--:-- --:--:--   502
+* Connection #0 to host localhost left intact
+{"userId":3,"username":"testuser_1765214218","nombreCompleto":"Test User","token":"eyJhbGciOiJIUzI1NiJ9.eyJyb2xlcyI6WyJDTElFTlRFIl0sInVzZXJJZCI6Mywic3ViIjoidGVzdHVzZXJfMTc2NTIxNDIxOCIsImlhdCI6MTc2NTIxNDIyMCwiZXhwIjoxNzY1MjE3ODIwfQ.HeuX8mBrvNPFZJsdo7ePksU3tywcoebtid-TEDvU9R0","roles":["CLIENTE"]}

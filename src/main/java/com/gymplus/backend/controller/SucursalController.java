@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/sucursales")
@@ -36,17 +37,20 @@ public class SucursalController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEV')")
     public ResponseEntity<SucursalResponseDto> crear(@Valid @RequestBody SucursalRequestDto dto) {
         SucursalResponseDto response = sucursalService.crear(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEV')")
     public SucursalResponseDto actualizar(@PathVariable Long id, @Valid @RequestBody SucursalRequestDto dto) {
         return sucursalService.actualizar(id, dto);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEV')")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         sucursalService.eliminar(id);
         return ResponseEntity.noContent().build();
