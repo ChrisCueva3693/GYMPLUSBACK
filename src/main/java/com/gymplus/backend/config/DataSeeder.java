@@ -26,7 +26,7 @@ public class DataSeeder implements CommandLineRunner {
         if (rolRepository.findByNombre("CLIENTE").isEmpty()) {
             Rol rol = Rol.builder()
                     .nombre("CLIENTE")
-                    .descripcion("Rol para clientes del gimnasio")
+                    .descripcion("Rol para clientes del gimnasios")
                     .build();
             rolRepository.save(rol);
             System.out.println("Seeded Rol: CLIENTE");
