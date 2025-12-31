@@ -1,0 +1,1 @@
+ALTER TABLE gimnasio ADD COLUMN direccion VARCHAR(255);

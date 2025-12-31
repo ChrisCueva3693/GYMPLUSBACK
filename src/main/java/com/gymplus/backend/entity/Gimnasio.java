@@ -20,6 +20,9 @@ public class Gimnasio {
     @Column(name = "nombre", nullable = false, length = 150)
     private String nombre;
 
+    @Column(name = "direccion")
+    private String direccion;
+
     @Column(name = "ruc", length = 20)
     private String ruc;
 

@@ -16,4 +16,9 @@ public class LoginResponse {
     private String nombreCompleto;
     private String token;
     private Set<String> roles;
+
+    private Long gimnasioId;
+    private String gimnasioNombre;
+    private Long sucursalId;
+    private String sucursalNombre;
 }

@@ -42,11 +42,12 @@ public class SucursalServiceImpl implements SucursalService {
     public SucursalResponseDto crear(SucursalRequestDto dto) {
         Gimnasio gimnasio = obtenerGimnasio(dto.getIdGimnasio());
         Sucursal sucursal = modelMapper.map(dto, Sucursal.class);
+        sucursal.setId(null); // Ensure ID is null for new entity
         sucursal.setGimnasio(gimnasio);
         if (sucursal.getActivo() == null) {
             sucursal.setActivo(true);
         }
-        sucursalRepository.save(sucursal);
+        sucursal = sucursalRepository.save(sucursal); // Update reference with saved entity
         return toDto(sucursal);
     }
 

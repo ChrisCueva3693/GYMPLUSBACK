@@ -20,6 +20,8 @@ public class UsuarioResponseDto {
     private String apellido;
     private String email;
     private String telefono;
+    private String cedula;
+    private String cedulaTipo;
     private String username;
 
     private Boolean activo;

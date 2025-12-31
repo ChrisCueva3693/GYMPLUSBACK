@@ -12,4 +12,24 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     boolean existsByEmail(String email);
 
     boolean existsByUsername(String username);
+
+    /**
+     * Buscar usuario por cédula
+     */
+    Optional<Usuario> findByCedula(String cedula);
+
+    /**
+     * Verificar si existe una cédula
+     */
+    boolean existsByCedula(String cedula);
+
+    /**
+     * Buscar usuarios por gimnasio (para DEV)
+     */
+    java.util.List<Usuario> findByGimnasioId(Long gimnasioId);
+
+    /**
+     * Buscar usuarios por sucursal por defecto
+     */
+    java.util.List<Usuario> findBySucursalPorDefectoId(Long sucursalId);
 }

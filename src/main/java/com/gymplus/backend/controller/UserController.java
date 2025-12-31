@@ -63,4 +63,38 @@ public class UserController {
         usuarioService.cambiarRol(id, roles);
         return ResponseEntity.ok().build();
     }
+
+    /**
+     * Buscar usuario por cédula
+     */
+    @GetMapping("/cedula/{cedula}")
+    public UsuarioResponseDto buscarPorCedula(@PathVariable String cedula) {
+        return usuarioService.obtenerPorCedula(cedula);
+    }
+
+    /**
+     * Listar usuarios por gimnasio (solo DEV)
+     */
+    @GetMapping("/gimnasio/{gimnasioId}")
+    @PreAuthorize("hasRole('DEV')")
+    public List<UsuarioResponseDto> listarPorGimnasio(@PathVariable Long gimnasioId) {
+        return usuarioService.listarPorGimnasio(gimnasioId);
+    }
+
+    /**
+     * Listar usuarios por sucursal (ADMIN y DEV)
+     */
+    @GetMapping("/sucursal/{sucursalId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEV')")
+    public List<UsuarioResponseDto> listarPorSucursal(@PathVariable Long sucursalId) {
+        return usuarioService.listarPorSucursal(sucursalId);
+    }
+
+    @PostMapping("/{id}/vincular-sucursal")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEV')")
+    public ResponseEntity<Void> vincularSucursal(@PathVariable Long id,
+            @RequestBody com.gymplus.backend.dto.usuario.VincularSucursalDto dto) {
+        usuarioService.vincularSucursal(id, dto);
+        return ResponseEntity.ok().build();
+    }
 }

@@ -15,6 +15,7 @@ public class GimnasioResponseDto {
 
     private Long id;
     private String nombre;
+    private String direccion;
     private String ruc;
     private String emailContacto;
     private String telefono;

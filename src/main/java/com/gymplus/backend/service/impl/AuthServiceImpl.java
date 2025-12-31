@@ -96,6 +96,11 @@ public class AuthServiceImpl implements AuthService {
                 .nombreCompleto(usuario.getNombre() + " " + usuario.getApellido())
                 .token(token)
                 .roles(roles)
+                .gimnasioId(usuario.getGimnasio().getId())
+                .gimnasioNombre(usuario.getGimnasio().getNombre())
+                .sucursalId(usuario.getSucursalPorDefecto() != null ? usuario.getSucursalPorDefecto().getId() : null)
+                .sucursalNombre(
+                        usuario.getSucursalPorDefecto() != null ? usuario.getSucursalPorDefecto().getNombre() : null)
                 .build();
     }
 
@@ -126,7 +131,8 @@ public class AuthServiceImpl implements AuthService {
     private UsuarioResponseDto toDto(Usuario usuario) {
         UsuarioResponseDto dto = modelMapper.map(usuario, UsuarioResponseDto.class);
         dto.setIdGimnasio(usuario.getGimnasio().getId());
-        dto.setIdSucursalPorDefecto(usuario.getSucursalPorDefecto() != null ? usuario.getSucursalPorDefecto().getId() : null);
+        dto.setIdSucursalPorDefecto(
+                usuario.getSucursalPorDefecto() != null ? usuario.getSucursalPorDefecto().getId() : null);
         Set<String> roles = usuario.getUsuarioRoles().stream()
                 .map(usuarioRol -> usuarioRol.getRol().getNombre())
                 .collect(Collectors.toSet());

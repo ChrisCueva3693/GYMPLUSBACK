@@ -2,15 +2,18 @@ package com.gymplus.backend.service.impl;
 
 import com.gymplus.backend.dto.usuario.UsuarioCreateUpdateDto;
 import com.gymplus.backend.dto.usuario.UsuarioResponseDto;
+import com.gymplus.backend.dto.usuario.VincularSucursalDto;
 import com.gymplus.backend.entity.Gimnasio;
 import com.gymplus.backend.entity.Rol;
 import com.gymplus.backend.entity.Sucursal;
 import com.gymplus.backend.entity.Usuario;
 import com.gymplus.backend.entity.UsuarioRol;
+import com.gymplus.backend.entity.UsuarioSucursal;
 import com.gymplus.backend.repository.GimnasioRepository;
 import com.gymplus.backend.repository.RolRepository;
 import com.gymplus.backend.repository.SucursalRepository;
 import com.gymplus.backend.repository.UsuarioRepository;
+import com.gymplus.backend.repository.UsuarioSucursalRepository;
 import com.gymplus.backend.service.UsuarioService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -32,6 +36,7 @@ public class UsuarioServiceImpl implements UsuarioService {
     private final UsuarioRepository usuarioRepository;
     private final GimnasioRepository gimnasioRepository;
     private final SucursalRepository sucursalRepository;
+    private final UsuarioSucursalRepository usuarioSucursalRepository;
     private final RolRepository rolRepository;
     private final ModelMapper modelMapper;
     private final PasswordEncoder passwordEncoder;
@@ -97,6 +102,68 @@ public class UsuarioServiceImpl implements UsuarioService {
         Usuario usuario = obtenerEntidad(id);
         asignarRoles(usuario, roles);
         usuarioRepository.save(usuario);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UsuarioResponseDto obtenerPorCedula(String cedula) {
+        Usuario usuario = usuarioRepository.findByCedula(cedula)
+                .orElseThrow(() -> new EntityNotFoundException("Usuario con cédula " + cedula + " no encontrado"));
+        return toDto(usuario);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UsuarioResponseDto> listarPorGimnasio(Long gimnasioId) {
+        return usuarioRepository.findByGimnasioId(gimnasioId).stream()
+                .map(this::toDto)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UsuarioResponseDto> listarPorSucursal(Long sucursalId) {
+        return usuarioRepository.findBySucursalPorDefectoId(sucursalId).stream()
+                .map(this::toDto)
+                .toList();
+    }
+
+    @Override
+    public void vincularSucursal(Long idUsuario, VincularSucursalDto dto) {
+        Usuario usuario = obtenerEntidad(idUsuario);
+        Sucursal nuevaSucursal = obtenerSucursal(dto.getIdSucursal());
+
+        // Verificar que la sucursal pertenece al mismo gimnasio
+        if (!usuario.getGimnasio().getId().equals(nuevaSucursal.getGimnasio().getId())) {
+            throw new IllegalArgumentException("La sucursal destino debe pertenecer al mismo gimnasio del usuario");
+        }
+
+        // Marcar vinculaciones anteriores como inactivas (opcional, o mantener
+        // historial activo)
+        // En este caso, permitimos múltiples activas, pero actualizamos su sucursal por
+        // defecto
+
+        // Crear nueva vinculación
+        UsuarioSucursal vinculacion = UsuarioSucursal.builder()
+                .usuario(usuario)
+                .sucursal(nuevaSucursal)
+                .fechaVinculacion(LocalDateTime.now())
+                .activo(true)
+                .notas(dto.getNotas())
+                .build();
+
+        // Guardar vinculación (necesitamos el repo, si no lo tenemos inyectado,
+        // añadirlo)
+        // Como no tenemos UsuarioSucursalRepository inyectado aun, lo añadimos.
+        // Espera, check constructor arguments...
+        // Mejor añadir el repo a la clase.
+
+        // Actualizar sucursal por defecto
+        usuario.setSucursalPorDefecto(nuevaSucursal);
+        usuarioRepository.save(usuario);
+
+        // Guardar vinculación
+        usuarioSucursalRepository.save(vinculacion);
     }
 
     private void validarUnicidad(String email, String username, Usuario actual) {

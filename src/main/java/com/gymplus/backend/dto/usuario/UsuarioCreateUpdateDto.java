@@ -27,6 +27,10 @@ public class UsuarioCreateUpdateDto {
 
     private String telefono;
 
+    private String cedula;
+
+    private String cedulaTipo;
+
     @NotBlank
     private String username;
 

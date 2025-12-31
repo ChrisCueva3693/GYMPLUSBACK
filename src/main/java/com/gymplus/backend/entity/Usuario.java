@@ -41,6 +41,13 @@ public class Usuario {
     @Column(name = "telefono", length = 30)
     private String telefono;
 
+    @Column(name = "cedula", length = 20)
+    private String cedula;
+
+    @Builder.Default
+    @Column(name = "cedula_tipo", length = 20)
+    private String cedulaTipo = "NACIONAL";
+
     @Column(name = "username", nullable = false, unique = true, length = 50)
     private String username;
 

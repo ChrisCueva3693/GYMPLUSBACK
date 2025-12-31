@@ -18,4 +18,12 @@ public interface UsuarioService {
     void eliminar(Long id);
 
     void cambiarRol(Long id, java.util.Set<String> roles);
+
+    UsuarioResponseDto obtenerPorCedula(String cedula);
+
+    List<UsuarioResponseDto> listarPorGimnasio(Long gimnasioId);
+
+    List<UsuarioResponseDto> listarPorSucursal(Long sucursalId);
+
+    void vincularSucursal(Long idUsuario, com.gymplus.backend.dto.usuario.VincularSucursalDto dto);
 }

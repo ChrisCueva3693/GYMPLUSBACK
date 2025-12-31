@@ -18,6 +18,8 @@ public class GimnasioRequestDto {
     @NotBlank
     private String nombre;
 
+    private String direccion;
+
     private String ruc;
 
     @Email
