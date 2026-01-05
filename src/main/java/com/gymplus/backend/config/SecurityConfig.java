@@ -39,6 +39,7 @@ public class SecurityConfig {
                                 new org.springframework.security.web.util.matcher.AntPathRequestMatcher("/actuator/**"),
                                 new org.springframework.security.web.util.matcher.AntPathRequestMatcher("/error"))
                         .permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

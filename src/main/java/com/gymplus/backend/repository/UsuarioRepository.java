@@ -32,4 +32,11 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
      * Buscar usuarios por sucursal por defecto
      */
     java.util.List<Usuario> findBySucursalPorDefectoId(Long sucursalId);
+
+    /**
+     * Buscar usuario por username con sucursalPorDefecto cargada
+     */
+    @org.springframework.data.jpa.repository.Query("SELECT u FROM Usuario u LEFT JOIN FETCH u.sucursalPorDefecto WHERE u.username = :username")
+    java.util.Optional<Usuario> findByUsernameWithSucursal(
+            @org.springframework.data.repository.query.Param("username") String username);
 }

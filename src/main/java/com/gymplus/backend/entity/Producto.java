@@ -20,6 +20,10 @@ public class Producto {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "id_sucursal", nullable = false)
+    private Sucursal sucursal;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_gimnasio", nullable = false)
     private Gimnasio gimnasio;
 

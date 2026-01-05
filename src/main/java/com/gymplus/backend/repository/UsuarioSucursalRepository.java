@@ -23,7 +23,7 @@ public interface UsuarioSucursalRepository extends JpaRepository<UsuarioSucursal
     /**
      * Encuentra las vinculaciones activas de un usuario
      */
-    List<UsuarioSucursal> findByUsuarioIdAndActivoTrue(Long usuarioId);
+    List<UsuarioSucursal> findByUsuario_IdAndActivoTrue(Long usuarioId);
 
     /**
      * Encuentra una vinculación específica usuario-sucursal

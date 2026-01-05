@@ -59,7 +59,16 @@ public class UsuarioServiceImpl implements UsuarioService {
     public UsuarioResponseDto crear(UsuarioCreateUpdateDto dto) {
         validarUnicidad(dto.getEmail(), dto.getUsername(), null);
         Usuario usuario = new Usuario();
-        modelMapper.map(dto, usuario);
+
+        // Manual mapping to avoid ModelMapper ID collision
+        usuario.setNombre(dto.getNombre());
+        usuario.setApellido(dto.getApellido());
+        usuario.setEmail(dto.getEmail());
+        usuario.setTelefono(dto.getTelefono());
+        usuario.setCedula(dto.getCedula());
+        usuario.setCedulaTipo(dto.getCedulaTipo() != null ? dto.getCedulaTipo() : "CEDULA");
+        usuario.setUsername(dto.getUsername());
+
         Gimnasio gimnasio = obtenerGimnasio(dto.getIdGimnasio());
         usuario.setGimnasio(gimnasio);
         if (dto.getIdSucursalPorDefecto() != null) {
@@ -68,6 +77,9 @@ public class UsuarioServiceImpl implements UsuarioService {
         if (dto.getPassword() != null) {
             usuario.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
         }
+        // Set required fields explicitly
+        usuario.setFechaRegistro(LocalDateTime.now());
+        usuario.setActivo(true);
         usuario.setUsuarioRoles(new HashSet<>());
         asignarRoles(usuario, dto.getRoles());
         usuarioRepository.save(usuario);
@@ -78,12 +90,26 @@ public class UsuarioServiceImpl implements UsuarioService {
     public UsuarioResponseDto actualizar(Long id, UsuarioCreateUpdateDto dto) {
         Usuario usuario = obtenerEntidad(id);
         validarUnicidad(dto.getEmail(), dto.getUsername(), usuario);
+
         Gimnasio gimnasio = dto.getIdGimnasio() != null ? obtenerGimnasio(dto.getIdGimnasio()) : usuario.getGimnasio();
-        usuario.setGimnasio(gimnasio);
+
         if (dto.getIdSucursalPorDefecto() != null) {
             usuario.setSucursalPorDefecto(obtenerSucursal(dto.getIdSucursalPorDefecto()));
         }
-        modelMapper.map(dto, usuario);
+
+        // Manual mapping
+        usuario.setNombre(dto.getNombre());
+        usuario.setApellido(dto.getApellido());
+        usuario.setEmail(dto.getEmail());
+        usuario.setTelefono(dto.getTelefono());
+        usuario.setCedula(dto.getCedula());
+        if (dto.getCedulaTipo() != null) {
+            usuario.setCedulaTipo(dto.getCedulaTipo());
+        }
+        usuario.setUsername(dto.getUsername());
+
+        usuario.setGimnasio(gimnasio);
+
         if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
             usuario.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
         }

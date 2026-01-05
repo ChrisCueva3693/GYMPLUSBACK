@@ -1,19 +1,15 @@
 package com.gymplus.backend.service;
 
-import com.gymplus.backend.dto.membresia.MembresiaRequestDto;
-import com.gymplus.backend.dto.membresia.MembresiaResponseDto;
+import com.gymplus.backend.dto.CrearMembresiaRequest;
+import com.gymplus.backend.dto.MembresiaDto;
 
 import java.util.List;
 
 public interface MembresiaService {
 
-    List<MembresiaResponseDto> listar();
+    List<MembresiaDto> listar();
 
-    MembresiaResponseDto obtenerPorId(Long id);
+    MembresiaDto obtenerPorId(Long id);
 
-    MembresiaResponseDto crear(MembresiaRequestDto dto);
-
-    MembresiaResponseDto actualizar(Long id, MembresiaRequestDto dto);
-
-    void eliminar(Long id);
+    MembresiaDto crearMembresia(CrearMembresiaRequest request);
 }
