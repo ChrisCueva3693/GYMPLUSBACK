@@ -20,19 +20,19 @@ public class VentaController {
     private final VentaService ventaService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'DEV')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEV', 'COACH')")
     public List<VentaDto> listar() {
         return ventaService.listar();
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DEV')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEV', 'COACH')")
     public VentaDto obtenerPorId(@PathVariable Long id) {
         return ventaService.obtenerPorId(id);
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'DEV')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEV', 'COACH')")
     public ResponseEntity<VentaDto> crearVenta(@Valid @RequestBody CrearVentaRequest request) {
         VentaDto response = ventaService.crearVenta(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);

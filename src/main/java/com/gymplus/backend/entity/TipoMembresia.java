@@ -31,6 +31,15 @@ public class TipoMembresia {
     @Column(name = "precio_base", precision = 15, scale = 2)
     private BigDecimal precioBase;
 
+    @Builder.Default
     @Column(name = "activo", nullable = false)
     private Boolean activo = true;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_gimnasio")
+    private Gimnasio gimnasio;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_sucursal")
+    private Sucursal sucursal;
 }

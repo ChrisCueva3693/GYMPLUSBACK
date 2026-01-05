@@ -12,4 +12,6 @@ public interface MembresiaService {
     MembresiaDto obtenerPorId(Long id);
 
     MembresiaDto crearMembresia(CrearMembresiaRequest request);
+
+    List<MembresiaDto> crearMembresiaGrupal(com.gymplus.backend.dto.GrupoMembresiaRequest request);
 }

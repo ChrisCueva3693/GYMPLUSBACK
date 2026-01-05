@@ -20,21 +20,29 @@ public class MembresiaController {
     private final MembresiaService membresiaService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'DEV')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEV', 'COACH')")
     public List<MembresiaDto> listar() {
         return membresiaService.listar();
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DEV')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEV', 'COACH')")
     public MembresiaDto obtenerPorId(@PathVariable Long id) {
         return membresiaService.obtenerPorId(id);
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'DEV')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEV', 'COACH')")
     public ResponseEntity<MembresiaDto> crearMembresia(@Valid @RequestBody CrearMembresiaRequest request) {
         MembresiaDto response = membresiaService.crearMembresia(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PostMapping("/grupal")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEV', 'COACH')")
+    public ResponseEntity<List<MembresiaDto>> crearMembresiaGrupal(
+            @Valid @RequestBody com.gymplus.backend.dto.GrupoMembresiaRequest request) {
+        List<MembresiaDto> response = membresiaService.crearMembresiaGrupal(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }

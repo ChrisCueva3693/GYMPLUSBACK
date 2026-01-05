@@ -34,7 +34,7 @@ public class VentaServiceImpl implements VentaService {
     public List<VentaDto> listar() {
         Sucursal sucursal = getCurrentUserSucursal();
         List<Venta> ventas = ventaRepository.findBySucursalIdOrderByFechaVentaDesc(sucursal.getId());
-        return ventas.stream().map(this::toDto).collect(Collectors.toList());
+        return ventas.stream().map(this::toDtoWithDetalles).collect(Collectors.toList());
     }
 
     @Override
@@ -55,10 +55,6 @@ public class VentaServiceImpl implements VentaService {
         // Get client
         Usuario cliente = usuarioRepository.findById(request.getClienteId())
                 .orElseThrow(() -> new EntityNotFoundException("Cliente no encontrado"));
-
-        // Get payment type
-        TipoPago tipoPago = tipoPagoRepository.findById(request.getTipoPagoId())
-                .orElseThrow(() -> new EntityNotFoundException("Tipo de pago no encontrado"));
 
         // Validate stock and calculate total
         List<Producto> productos = new ArrayList<>();
@@ -114,19 +110,35 @@ public class VentaServiceImpl implements VentaService {
             productoRepository.save(producto);
         }
 
-        // Create Pago
-        Pago pago = Pago.builder()
-                .venta(venta)
-                .tipoPago(tipoPago)
-                .gimnasio(gimnasio)
-                .sucursal(sucursal)
-                .monto(total)
-                .fechaPago(LocalDateTime.now())
-                .referencia(request.getReferencia())
-                .estado("COMPLETADO")
-                .build();
+        // Validate payments match total
+        BigDecimal totalPagado = request.getPagos().stream()
+                .map(com.gymplus.backend.dto.venta.DetallePagoDto::getMonto)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        pagoRepository.save(pago);
+        // Allow small rounding differences if strictly needed, but for now exact match
+        if (totalPagado.compareTo(total) < 0) {
+            throw new IllegalArgumentException("El monto total pagado es menor al total de la venta");
+        }
+
+        // Create Pagos
+        for (com.gymplus.backend.dto.venta.DetallePagoDto pagoReq : request.getPagos()) {
+            TipoPago tp = tipoPagoRepository.findById(pagoReq.getTipoPagoId())
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            "Tipo de pago " + pagoReq.getTipoPagoId() + " no encontrado"));
+
+            Pago pago = Pago.builder()
+                    .venta(venta)
+                    .tipoPago(tp)
+                    .gimnasio(gimnasio)
+                    .sucursal(sucursal)
+                    .monto(pagoReq.getMonto())
+                    .fechaPago(LocalDateTime.now())
+                    .referencia(request.getReferencia())
+                    .estado("COMPLETADO")
+                    .build();
+
+            pagoRepository.save(pago);
+        }
 
         return toDtoWithDetalles(venta);
     }

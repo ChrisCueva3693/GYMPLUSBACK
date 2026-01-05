@@ -21,4 +21,5 @@ public class LoginResponse {
     private String gimnasioNombre;
     private Long sucursalId;
     private String sucursalNombre;
+    private String cedula;
 }

@@ -9,10 +9,10 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CrearMembresiaRequest {
+public class GrupoMembresiaRequest {
 
-    @NotNull(message = "El cliente es requerido")
-    private Long clienteId;
+    @NotEmpty(message = "Debe incluir al menos un cliente")
+    private List<Long> clientesIds;
 
     @NotNull(message = "El tipo de membresía es requerido")
     private Long tipoMembresiaId;
@@ -22,5 +22,5 @@ public class CrearMembresiaRequest {
 
     private LocalDate fechaInicio; // Optional, defaults to today
 
-    private String referencia; // Optional payment reference
+    private String referencia;
 }

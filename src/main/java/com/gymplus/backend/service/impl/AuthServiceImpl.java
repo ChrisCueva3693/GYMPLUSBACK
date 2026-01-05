@@ -101,6 +101,7 @@ public class AuthServiceImpl implements AuthService {
                 .sucursalId(usuario.getSucursalPorDefecto() != null ? usuario.getSucursalPorDefecto().getId() : null)
                 .sucursalNombre(
                         usuario.getSucursalPorDefecto() != null ? usuario.getSucursalPorDefecto().getNombre() : null)
+                .cedula(usuario.getCedula())
                 .build();
     }
 

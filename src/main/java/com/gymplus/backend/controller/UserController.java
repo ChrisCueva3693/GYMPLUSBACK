@@ -38,20 +38,20 @@ public class UserController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'DEV')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEV', 'COACH')")
     public ResponseEntity<UsuarioResponseDto> crear(@Valid @RequestBody UsuarioCreateUpdateDto dto) {
         UsuarioResponseDto response = usuarioService.crear(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DEV')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEV', 'COACH')")
     public UsuarioResponseDto actualizar(@PathVariable Long id, @Valid @RequestBody UsuarioCreateUpdateDto dto) {
         return usuarioService.actualizar(id, dto);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DEV')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEV', 'COACH')")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         usuarioService.eliminar(id);
         return ResponseEntity.noContent().build();
@@ -85,7 +85,7 @@ public class UserController {
      * Listar usuarios por sucursal (ADMIN y DEV)
      */
     @GetMapping("/sucursal/{sucursalId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DEV')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEV', 'COACH')")
     public List<UsuarioResponseDto> listarPorSucursal(@PathVariable Long sucursalId) {
         return usuarioService.listarPorSucursal(sucursalId);
     }
