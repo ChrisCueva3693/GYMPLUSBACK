@@ -102,7 +102,7 @@ jobs:
             docker pull "$IMAGE" || docker pull "$LATEST" || exit 1
 
             echo "==> Ensuring Network"
-            # Aseguramos que existe la red compartida (si usa Traefik u otros servicios)
+            # Aseguramos que existe la red compartida (si usa Traefikk u otros servicios)
             docker network inspect n8n_evoapi >/dev/null 2>&1 || docker network create n8n_evoapi
 
             echo "==> Stopping old container"
