@@ -9,6 +9,8 @@ public interface SucursalService {
 
     List<SucursalResponseDto> listar();
 
+    List<SucursalResponseDto> listarPorGimnasio(Long idGimnasio);
+
     SucursalResponseDto obtenerPorId(Long id);
 
     SucursalResponseDto crear(SucursalRequestDto dto);

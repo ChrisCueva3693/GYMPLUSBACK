@@ -31,6 +31,11 @@ public class SucursalController {
         return sucursalService.listar();
     }
 
+    @GetMapping("/gimnasio/{idGimnasio}")
+    public List<SucursalResponseDto> listarPorGimnasio(@PathVariable Long idGimnasio) {
+        return sucursalService.listarPorGimnasio(idGimnasio);
+    }
+
     @GetMapping("/{id}")
     public SucursalResponseDto obtenerPorId(@PathVariable Long id) {
         return sucursalService.obtenerPorId(id);

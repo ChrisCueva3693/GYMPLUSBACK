@@ -34,6 +34,14 @@ public class SucursalServiceImpl implements SucursalService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<SucursalResponseDto> listarPorGimnasio(Long idGimnasio) {
+        return sucursalRepository.findByGimnasioId(idGimnasio).stream()
+                .map(this::toDto)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public SucursalResponseDto obtenerPorId(Long id) {
         return toDto(obtenerEntidad(id));
     }
