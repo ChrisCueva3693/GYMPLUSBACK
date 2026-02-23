@@ -1,5 +1,6 @@
 package com.gymplus.backend.controller;
 
+import com.gymplus.backend.dto.AbonoRequest;
 import com.gymplus.backend.dto.CrearVentaRequest;
 import com.gymplus.backend.dto.VentaDto;
 import com.gymplus.backend.service.VentaService;
@@ -36,5 +37,14 @@ public class VentaController {
     public ResponseEntity<VentaDto> crearVenta(@Valid @RequestBody CrearVentaRequest request) {
         VentaDto response = ventaService.crearVenta(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PostMapping("/{id}/abono")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEV', 'COACH')")
+    public ResponseEntity<VentaDto> registrarAbono(
+            @PathVariable Long id,
+            @Valid @RequestBody AbonoRequest request) {
+        VentaDto response = ventaService.registrarAbono(id, request);
+        return ResponseEntity.ok(response);
     }
 }

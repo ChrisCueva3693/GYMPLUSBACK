@@ -34,11 +34,19 @@ public class Venta {
     @JoinColumn(name = "id_usuario", nullable = false)
     private Usuario usuario;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_registrado_por")
+    private Usuario registradoPor;
+
     @Column(name = "fecha_venta", nullable = false)
     private LocalDateTime fechaVenta;
 
     @Column(name = "total", nullable = false, precision = 15, scale = 2)
     private BigDecimal total;
+
+    @Column(name = "saldo_pendiente", precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal saldoPendiente = BigDecimal.ZERO;
 
     @Column(name = "estado", length = 30)
     private String estado;

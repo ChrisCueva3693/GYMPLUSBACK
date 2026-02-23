@@ -19,6 +19,7 @@ public class ReportePagoDto {
     private BigDecimal monto;
     private String concepto; // "Venta #123" or "Membresía #456"
     private String referencia;
-    private String usuario; // Quien registró (opcional, si queremos mostrarlo)
-    private java.util.List<String> detalles; // New field for itemized details
+    private String clienteNombre; // Quien compró/pagó
+    private String registradoPorNombre; // Quien registró (empleado)
+    private java.util.List<String> detalles; // Detalles de los productos o plan
 }

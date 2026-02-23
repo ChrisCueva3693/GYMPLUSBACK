@@ -51,93 +51,100 @@ public class MembresiaServiceImpl implements MembresiaService {
         public MembresiaDto crearMembresia(CrearMembresiaRequest request) {
                 Sucursal sucursal = getCurrentUserSucursal();
                 Gimnasio gimnasio = sucursal.getGimnasio();
+                Usuario registrador = getCurrentUser();
 
-                // Get client
                 Usuario cliente = usuarioRepository.findById(request.getClienteId())
                                 .orElseThrow(() -> new EntityNotFoundException("Cliente no encontrado"));
 
-                // Get membership type
                 TipoMembresia tipoMembresia = tipoMembresiaRepository.findById(request.getTipoMembresiaId())
                                 .orElseThrow(() -> new EntityNotFoundException("Tipo de membresía no encontrado"));
 
-                // Calculate dates
                 LocalDate fechaInicio = request.getFechaInicio() != null ? request.getFechaInicio() : LocalDate.now();
                 LocalDate fechaFin = fechaInicio.plusDays(tipoMembresia.getDuracionDias());
 
-                // Create Membresia
+                // Calculate payments
+                BigDecimal precio = tipoMembresia.getPrecioBase();
+                BigDecimal totalPagado = BigDecimal.ZERO;
+                if (request.getPagos() != null && !request.getPagos().isEmpty()) {
+                        totalPagado = request.getPagos().stream()
+                                        .map(com.gymplus.backend.dto.venta.DetallePagoDto::getMonto)
+                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                }
+
+                BigDecimal saldoPendiente = precio.subtract(totalPagado).max(BigDecimal.ZERO);
+                String estado = saldoPendiente.compareTo(BigDecimal.ZERO) > 0 ? "PENDIENTE" : "ACTIVA";
+
                 Membresia membresia = Membresia.builder()
                                 .usuario(cliente)
                                 .tipoMembresia(tipoMembresia)
                                 .gimnasio(gimnasio)
                                 .sucursal(sucursal)
+                                .registradoPor(registrador)
                                 .fechaInicio(fechaInicio)
                                 .fechaFin(fechaFin)
-                                .estado("ACTIVA")
+                                .estado(estado)
+                                .saldoPendiente(saldoPendiente)
                                 .autoRenovacion(false)
                                 .build();
 
                 membresia = membresiaRepository.save(membresia);
 
-                // Validate payments match price
-                BigDecimal precio = tipoMembresia.getPrecioBase();
-                BigDecimal totalPagado = request.getPagos().stream()
-                                .map(com.gymplus.backend.dto.venta.DetallePagoDto::getMonto)
-                                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                if (totalPagado.compareTo(precio) < 0) {
-                        throw new IllegalArgumentException("El monto total pagado es menor al precio de la membresía");
-                }
-
                 // Create Pagos
-                for (com.gymplus.backend.dto.venta.DetallePagoDto pagoReq : request.getPagos()) {
-                        TipoPago tp = tipoPagoRepository.findById(pagoReq.getTipoPagoId())
-                                        .orElseThrow(() -> new EntityNotFoundException(
-                                                        "Tipo de pago " + pagoReq.getTipoPagoId() + " no encontrado"));
+                if (request.getPagos() != null) {
+                        for (com.gymplus.backend.dto.venta.DetallePagoDto pagoReq : request.getPagos()) {
+                                TipoPago tp = tipoPagoRepository.findById(pagoReq.getTipoPagoId())
+                                                .orElseThrow(() -> new EntityNotFoundException(
+                                                                "Tipo de pago " + pagoReq.getTipoPagoId()
+                                                                                + " no encontrado"));
 
-                        Pago pago = Pago.builder()
-                                        .membresia(membresia)
-                                        .tipoPago(tp)
-                                        .gimnasio(gimnasio)
-                                        .sucursal(sucursal)
-                                        .monto(pagoReq.getMonto())
-                                        .fechaPago(LocalDateTime.now())
-                                        .referencia(request.getReferencia())
-                                        .estado("COMPLETADO")
-                                        .build();
+                                Pago pago = Pago.builder()
+                                                .membresia(membresia)
+                                                .tipoPago(tp)
+                                                .gimnasio(gimnasio)
+                                                .sucursal(sucursal)
+                                                .monto(pagoReq.getMonto())
+                                                .fechaPago(LocalDateTime.now())
+                                                .referencia(request.getReferencia())
+                                                .estado("COMPLETADO")
+                                                .build();
 
-                        pagoRepository.save(pago);
+                                pagoRepository.save(pago);
+                        }
                 }
 
                 return toDto(membresia);
         }
 
+        @Override
         public List<MembresiaDto> crearMembresiaGrupal(GrupoMembresiaRequest request) {
                 Sucursal sucursal = getCurrentUserSucursal();
                 Gimnasio gimnasio = sucursal.getGimnasio();
+                Usuario registrador = getCurrentUser();
 
-                // Get membership type
                 TipoMembresia tipoMembresia = tipoMembresiaRepository.findById(request.getTipoMembresiaId())
                                 .orElseThrow(() -> new EntityNotFoundException("Tipo de membresía no encontrado"));
 
-                // Validate total payments matches total price (Price * Number of Clients)
                 BigDecimal precioUnitario = tipoMembresia.getPrecioBase();
                 BigDecimal precioTotal = precioUnitario.multiply(BigDecimal.valueOf(request.getClientesIds().size()));
 
-                BigDecimal totalPagado = request.getPagos().stream()
-                                .map(com.gymplus.backend.dto.venta.DetallePagoDto::getMonto)
-                                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                // Allow small rounding differences.
-                if (totalPagado.compareTo(precioTotal) < 0) {
-                        throw new IllegalArgumentException("El pago total (" + totalPagado
-                                        + ") es menor al costo total de las membresías (" + precioTotal + ")");
+                BigDecimal totalPagado = BigDecimal.ZERO;
+                if (request.getPagos() != null && !request.getPagos().isEmpty()) {
+                        totalPagado = request.getPagos().stream()
+                                        .map(com.gymplus.backend.dto.venta.DetallePagoDto::getMonto)
+                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
                 }
 
-                List<MembresiaDto> createdMembresias = new ArrayList<>();
+                BigDecimal saldoPendienteTotal = precioTotal.subtract(totalPagado).max(BigDecimal.ZERO);
+                // Distribute pending balance per client
+                BigDecimal saldoPorCliente = request.getClientesIds().size() > 0
+                                ? saldoPendienteTotal.divide(BigDecimal.valueOf(request.getClientesIds().size()), 2,
+                                                java.math.RoundingMode.HALF_UP)
+                                : BigDecimal.ZERO;
+                String estado = saldoPendienteTotal.compareTo(BigDecimal.ZERO) > 0 ? "PENDIENTE" : "ACTIVA";
+
                 LocalDate fechaInicio = request.getFechaInicio() != null ? request.getFechaInicio() : LocalDate.now();
                 LocalDate fechaFin = fechaInicio.plusDays(tipoMembresia.getDuracionDias());
 
-                // 1. Create all memberships
                 List<Membresia> savedMembresias = new ArrayList<>();
                 for (Long clienteId : request.getClientesIds()) {
                         Usuario cliente = usuarioRepository.findById(clienteId)
@@ -149,49 +156,140 @@ public class MembresiaServiceImpl implements MembresiaService {
                                         .tipoMembresia(tipoMembresia)
                                         .gimnasio(gimnasio)
                                         .sucursal(sucursal)
+                                        .registradoPor(registrador)
                                         .fechaInicio(fechaInicio)
                                         .fechaFin(fechaFin)
-                                        .estado("ACTIVA")
+                                        .estado(estado)
+                                        .saldoPendiente(saldoPorCliente)
                                         .autoRenovacion(false)
                                         .build();
 
                         savedMembresias.add(membresiaRepository.save(m));
                 }
 
-                // 2. Register Payments (Linked to the first membership for tracking purposes)
+                // Register Payments (Linked to the first membership)
                 Membresia primaryMembresia = savedMembresias.get(0);
                 String groupRef = "GRUPO-" + primaryMembresia.getId()
                                 + (request.getReferencia() != null ? "-" + request.getReferencia() : "");
 
-                for (com.gymplus.backend.dto.venta.DetallePagoDto pagoReq : request.getPagos()) {
-                        TipoPago tp = tipoPagoRepository.findById(pagoReq.getTipoPagoId())
-                                        .orElseThrow(() -> new EntityNotFoundException(
-                                                        "Tipo de pago " + pagoReq.getTipoPagoId() + " no encontrado"));
+                if (request.getPagos() != null) {
+                        for (com.gymplus.backend.dto.venta.DetallePagoDto pagoReq : request.getPagos()) {
+                                TipoPago tp = tipoPagoRepository.findById(pagoReq.getTipoPagoId())
+                                                .orElseThrow(() -> new EntityNotFoundException(
+                                                                "Tipo de pago " + pagoReq.getTipoPagoId()
+                                                                                + " no encontrado"));
 
-                        Pago pago = Pago.builder()
-                                        .membresia(primaryMembresia)
-                                        .tipoPago(tp)
-                                        .gimnasio(gimnasio)
-                                        .sucursal(sucursal)
-                                        .monto(pagoReq.getMonto())
-                                        .fechaPago(LocalDateTime.now())
-                                        .referencia(groupRef) // Mark as Group Payment
-                                        .estado("COMPLETADO")
-                                        .build();
+                                Pago pago = Pago.builder()
+                                                .membresia(primaryMembresia)
+                                                .tipoPago(tp)
+                                                .gimnasio(gimnasio)
+                                                .sucursal(sucursal)
+                                                .monto(pagoReq.getMonto())
+                                                .fechaPago(LocalDateTime.now())
+                                                .referencia(groupRef)
+                                                .estado("COMPLETADO")
+                                                .build();
 
-                        pagoRepository.save(pago);
+                                pagoRepository.save(pago);
+                        }
                 }
 
                 return savedMembresias.stream().map(this::toDto).collect(Collectors.toList());
         }
 
-        private Sucursal getCurrentUserSucursal() {
+        @Override
+        public MembresiaDto actualizarMembresia(Long id, ActualizarMembresiaRequest request) {
+                Membresia membresia = membresiaRepository.findById(id)
+                                .orElseThrow(() -> new ResourceNotFoundException("Membresía no encontrada"));
+
+                if (request.getTipoMembresiaId() != null) {
+                        TipoMembresia tipoMembresia = tipoMembresiaRepository.findById(request.getTipoMembresiaId())
+                                        .orElseThrow(() -> new EntityNotFoundException(
+                                                        "Tipo de membresía no encontrado"));
+                        membresia.setTipoMembresia(tipoMembresia);
+
+                        LocalDate inicio = request.getFechaInicio() != null ? request.getFechaInicio()
+                                        : membresia.getFechaInicio();
+                        membresia.setFechaFin(inicio.plusDays(tipoMembresia.getDuracionDias()));
+                }
+
+                if (request.getFechaInicio() != null) {
+                        membresia.setFechaInicio(request.getFechaInicio());
+                        membresia.setFechaFin(request.getFechaInicio()
+                                        .plusDays(membresia.getTipoMembresia().getDuracionDias()));
+                }
+
+                if (request.getEstado() != null && !request.getEstado().isBlank()) {
+                        membresia.setEstado(request.getEstado());
+                }
+
+                membresia = membresiaRepository.save(membresia);
+                return toDto(membresia);
+        }
+
+        @Override
+        public void eliminarMembresia(Long id) {
+                Membresia membresia = membresiaRepository.findById(id)
+                                .orElseThrow(() -> new ResourceNotFoundException("Membresía no encontrada"));
+
+                pagoRepository.deleteByMembresiaId(id);
+                membresiaRepository.delete(membresia);
+        }
+
+        @Override
+        public MembresiaDto registrarAbono(Long membresiaId, AbonoRequest request) {
+                Membresia membresia = membresiaRepository.findById(membresiaId)
+                                .orElseThrow(() -> new ResourceNotFoundException("Membresía no encontrada"));
+
+                if (membresia.getSaldoPendiente() == null
+                                || membresia.getSaldoPendiente().compareTo(BigDecimal.ZERO) <= 0) {
+                        throw new IllegalArgumentException("Esta membresía no tiene saldo pendiente");
+                }
+
+                if (request.getMonto().compareTo(membresia.getSaldoPendiente()) > 0) {
+                        throw new IllegalArgumentException("El monto del abono excede el saldo pendiente ($"
+                                        + membresia.getSaldoPendiente() + ")");
+                }
+
+                Sucursal sucursal = getCurrentUserSucursal();
+                Gimnasio gimnasio = sucursal.getGimnasio();
+
+                TipoPago tp = tipoPagoRepository.findById(request.getTipoPagoId())
+                                .orElseThrow(() -> new EntityNotFoundException("Tipo de pago no encontrado"));
+
+                Pago pago = Pago.builder()
+                                .membresia(membresia)
+                                .tipoPago(tp)
+                                .gimnasio(gimnasio)
+                                .sucursal(sucursal)
+                                .monto(request.getMonto())
+                                .fechaPago(LocalDateTime.now())
+                                .referencia(request.getReferencia() != null ? request.getReferencia() : "ABONO")
+                                .estado("COMPLETADO")
+                                .build();
+
+                pagoRepository.save(pago);
+
+                BigDecimal nuevoSaldo = membresia.getSaldoPendiente().subtract(request.getMonto()).max(BigDecimal.ZERO);
+                membresia.setSaldoPendiente(nuevoSaldo);
+
+                if (nuevoSaldo.compareTo(BigDecimal.ZERO) <= 0) {
+                        membresia.setEstado("ACTIVA");
+                }
+
+                membresia = membresiaRepository.save(membresia);
+                return toDto(membresia);
+        }
+
+        private Usuario getCurrentUser() {
                 Authentication auth = SecurityContextHolder.getContext().getAuthentication();
                 String username = auth.getName();
-
-                Usuario usuario = usuarioRepository.findByUsernameWithSucursal(username)
+                return usuarioRepository.findByUsernameWithSucursal(username)
                                 .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
+        }
 
+        private Sucursal getCurrentUserSucursal() {
+                Usuario usuario = getCurrentUser();
                 Sucursal sucursal = usuario.getSucursalPorDefecto();
                 if (sucursal == null) {
                         throw new RuntimeException("El usuario no tiene una sucursal asignada");
@@ -200,7 +298,7 @@ public class MembresiaServiceImpl implements MembresiaService {
         }
 
         private MembresiaDto toDto(Membresia m) {
-                return MembresiaDto.builder()
+                MembresiaDto.MembresiaDtoBuilder builder = MembresiaDto.builder()
                                 .id(m.getId())
                                 .clienteId(m.getUsuario().getId())
                                 .clienteNombre(m.getUsuario().getNombre() + " " + m.getUsuario().getApellido())
@@ -208,10 +306,17 @@ public class MembresiaServiceImpl implements MembresiaService {
                                 .tipoMembresiaId(m.getTipoMembresia().getId())
                                 .tipoMembresiaNombre(m.getTipoMembresia().getNombre())
                                 .precio(m.getTipoMembresia().getPrecioBase())
+                                .saldoPendiente(m.getSaldoPendiente())
                                 .fechaInicio(m.getFechaInicio())
                                 .fechaFin(m.getFechaFin())
                                 .estado(m.getEstado())
-                                .autoRenovacion(m.getAutoRenovacion())
-                                .build();
+                                .autoRenovacion(m.getAutoRenovacion());
+
+                if (m.getRegistradoPor() != null) {
+                        builder.registradoPorNombre(
+                                        m.getRegistradoPor().getNombre() + " " + m.getRegistradoPor().getApellido());
+                }
+
+                return builder.build();
         }
 }

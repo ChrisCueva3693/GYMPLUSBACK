@@ -3,6 +3,7 @@ package com.gymplus.backend.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
@@ -35,6 +36,10 @@ public class Membresia {
     @JoinColumn(name = "id_gimnasio", nullable = false)
     private Gimnasio gimnasio;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_registrado_por")
+    private Usuario registradoPor;
+
     @Column(name = "fecha_inicio", nullable = false)
     private LocalDate fechaInicio;
 
@@ -44,6 +49,11 @@ public class Membresia {
     @Column(name = "estado", length = 30)
     private String estado;
 
+    @Column(name = "saldo_pendiente", precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal saldoPendiente = BigDecimal.ZERO;
+
     @Column(name = "auto_renovacion")
+    @Builder.Default
     private Boolean autoRenovacion = false;
 }

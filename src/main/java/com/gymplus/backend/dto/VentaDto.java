@@ -15,7 +15,9 @@ public class VentaDto {
     private String clienteNombre;
     private LocalDateTime fechaVenta;
     private BigDecimal total;
+    private BigDecimal saldoPendiente;
     private String estado;
     private String tipoPagoNombre;
+    private String registradoPorNombre;
     private List<VentaDetalleDto> detalles;
 }

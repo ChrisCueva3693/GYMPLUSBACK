@@ -17,6 +17,8 @@ public class CheckInResponseDto {
 
     private Long id;
     private Long idUsuario;
+    private String usuarioNombre;
+    private String usuarioCedula;
     private Long idSucursal;
     private LocalDateTime fechaEntrada;
     private LocalDateTime fechaSalida;

@@ -21,4 +21,7 @@ public class ReporteIngresosDto {
 
     // Lista de transacciones para la tabla
     private List<ReportePagoDto> detallePagos;
+
+    // Aggregate de productos vendidos
+    private List<ProductoAgrupadoDto> productosVendidos;
 }

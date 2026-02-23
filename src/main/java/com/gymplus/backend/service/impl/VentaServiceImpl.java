@@ -52,6 +52,9 @@ public class VentaServiceImpl implements VentaService {
         Sucursal sucursal = getCurrentUserSucursal();
         Gimnasio gimnasio = sucursal.getGimnasio();
 
+        // Get the authenticated user (who is registering)
+        Usuario registrador = getCurrentUser();
+
         // Get client
         Usuario cliente = usuarioRepository.findById(request.getClienteId())
                 .orElseThrow(() -> new EntityNotFoundException("Cliente no encontrado"));
@@ -66,7 +69,6 @@ public class VentaServiceImpl implements VentaService {
                     .orElseThrow(
                             () -> new EntityNotFoundException("Producto " + item.getProductoId() + " no encontrado"));
 
-            // Check stock
             if (producto.getStockActual() < item.getCantidad()) {
                 throw new IllegalArgumentException(
                         "Stock insuficiente para " + producto.getNombre() +
@@ -78,14 +80,27 @@ public class VentaServiceImpl implements VentaService {
             total = total.add(producto.getPrecioUnitario().multiply(BigDecimal.valueOf(item.getCantidad())));
         }
 
+        // Calculate payment totals
+        BigDecimal totalPagado = BigDecimal.ZERO;
+        if (request.getPagos() != null && !request.getPagos().isEmpty()) {
+            totalPagado = request.getPagos().stream()
+                    .map(com.gymplus.backend.dto.venta.DetallePagoDto::getMonto)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
+
+        BigDecimal saldoPendiente = total.subtract(totalPagado).max(BigDecimal.ZERO);
+        String estado = saldoPendiente.compareTo(BigDecimal.ZERO) > 0 ? "PENDIENTE" : "COMPLETADA";
+
         // Create Venta
         Venta venta = Venta.builder()
                 .gimnasio(gimnasio)
                 .sucursal(sucursal)
                 .usuario(cliente)
+                .registradoPor(registrador)
                 .fechaVenta(LocalDateTime.now())
                 .total(total)
-                .estado("COMPLETADA")
+                .saldoPendiente(saldoPendiente)
+                .estado(estado)
                 .build();
 
         venta = ventaRepository.save(venta);
@@ -105,51 +120,90 @@ public class VentaServiceImpl implements VentaService {
 
             venta.getDetalles().add(detalle);
 
-            // Decrement stock
             producto.setStockActual(producto.getStockActual() - cantidad);
             productoRepository.save(producto);
         }
 
-        // Validate payments match total
-        BigDecimal totalPagado = request.getPagos().stream()
-                .map(com.gymplus.backend.dto.venta.DetallePagoDto::getMonto)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        // Allow small rounding differences if strictly needed, but for now exact match
-        if (totalPagado.compareTo(total) < 0) {
-            throw new IllegalArgumentException("El monto total pagado es menor al total de la venta");
-        }
-
         // Create Pagos
-        for (com.gymplus.backend.dto.venta.DetallePagoDto pagoReq : request.getPagos()) {
-            TipoPago tp = tipoPagoRepository.findById(pagoReq.getTipoPagoId())
-                    .orElseThrow(() -> new EntityNotFoundException(
-                            "Tipo de pago " + pagoReq.getTipoPagoId() + " no encontrado"));
+        if (request.getPagos() != null) {
+            for (com.gymplus.backend.dto.venta.DetallePagoDto pagoReq : request.getPagos()) {
+                TipoPago tp = tipoPagoRepository.findById(pagoReq.getTipoPagoId())
+                        .orElseThrow(() -> new EntityNotFoundException(
+                                "Tipo de pago " + pagoReq.getTipoPagoId() + " no encontrado"));
 
-            Pago pago = Pago.builder()
-                    .venta(venta)
-                    .tipoPago(tp)
-                    .gimnasio(gimnasio)
-                    .sucursal(sucursal)
-                    .monto(pagoReq.getMonto())
-                    .fechaPago(LocalDateTime.now())
-                    .referencia(request.getReferencia())
-                    .estado("COMPLETADO")
-                    .build();
+                Pago pago = Pago.builder()
+                        .venta(venta)
+                        .tipoPago(tp)
+                        .gimnasio(gimnasio)
+                        .sucursal(sucursal)
+                        .monto(pagoReq.getMonto())
+                        .fechaPago(LocalDateTime.now())
+                        .referencia(request.getReferencia())
+                        .estado("COMPLETADO")
+                        .build();
 
-            pagoRepository.save(pago);
+                pagoRepository.save(pago);
+            }
         }
 
         return toDtoWithDetalles(venta);
     }
 
-    private Sucursal getCurrentUserSucursal() {
+    @Override
+    public VentaDto registrarAbono(Long ventaId, AbonoRequest request) {
+        Venta venta = ventaRepository.findById(ventaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Venta no encontrada"));
+
+        if (venta.getSaldoPendiente() == null || venta.getSaldoPendiente().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Esta venta no tiene saldo pendiente");
+        }
+
+        if (request.getMonto().compareTo(venta.getSaldoPendiente()) > 0) {
+            throw new IllegalArgumentException(
+                    "El monto del abono excede el saldo pendiente ($" + venta.getSaldoPendiente() + ")");
+        }
+
+        Sucursal sucursal = getCurrentUserSucursal();
+        Gimnasio gimnasio = sucursal.getGimnasio();
+
+        TipoPago tp = tipoPagoRepository.findById(request.getTipoPagoId())
+                .orElseThrow(() -> new EntityNotFoundException("Tipo de pago no encontrado"));
+
+        // Create payment
+        Pago pago = Pago.builder()
+                .venta(venta)
+                .tipoPago(tp)
+                .gimnasio(gimnasio)
+                .sucursal(sucursal)
+                .monto(request.getMonto())
+                .fechaPago(LocalDateTime.now())
+                .referencia(request.getReferencia() != null ? request.getReferencia() : "ABONO")
+                .estado("COMPLETADO")
+                .build();
+
+        pagoRepository.save(pago);
+
+        // Update pending balance
+        BigDecimal nuevoSaldo = venta.getSaldoPendiente().subtract(request.getMonto()).max(BigDecimal.ZERO);
+        venta.setSaldoPendiente(nuevoSaldo);
+
+        if (nuevoSaldo.compareTo(BigDecimal.ZERO) <= 0) {
+            venta.setEstado("COMPLETADA");
+        }
+
+        venta = ventaRepository.save(venta);
+        return toDtoWithDetalles(venta);
+    }
+
+    private Usuario getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
-
-        Usuario usuario = usuarioRepository.findByUsernameWithSucursal(username)
+        return usuarioRepository.findByUsernameWithSucursal(username)
                 .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
+    }
 
+    private Sucursal getCurrentUserSucursal() {
+        Usuario usuario = getCurrentUser();
         Sucursal sucursal = usuario.getSucursalPorDefecto();
         if (sucursal == null) {
             throw new RuntimeException("El usuario no tiene una sucursal asignada");
@@ -158,14 +212,21 @@ public class VentaServiceImpl implements VentaService {
     }
 
     private VentaDto toDto(Venta venta) {
-        return VentaDto.builder()
+        VentaDto.VentaDtoBuilder builder = VentaDto.builder()
                 .id(venta.getId())
                 .clienteId(venta.getUsuario().getId())
                 .clienteNombre(venta.getUsuario().getNombre() + " " + venta.getUsuario().getApellido())
                 .fechaVenta(venta.getFechaVenta())
                 .total(venta.getTotal())
-                .estado(venta.getEstado())
-                .build();
+                .saldoPendiente(venta.getSaldoPendiente())
+                .estado(venta.getEstado());
+
+        if (venta.getRegistradoPor() != null) {
+            builder.registradoPorNombre(
+                    venta.getRegistradoPor().getNombre() + " " + venta.getRegistradoPor().getApellido());
+        }
+
+        return builder.build();
     }
 
     private VentaDto toDtoWithDetalles(Venta venta) {

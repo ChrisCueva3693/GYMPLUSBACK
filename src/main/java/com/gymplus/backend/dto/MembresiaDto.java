@@ -16,8 +16,10 @@ public class MembresiaDto {
     private Long tipoMembresiaId;
     private String tipoMembresiaNombre;
     private BigDecimal precio;
+    private BigDecimal saldoPendiente;
     private LocalDate fechaInicio;
     private LocalDate fechaFin;
     private String estado;
     private Boolean autoRenovacion;
+    private String registradoPorNombre;
 }

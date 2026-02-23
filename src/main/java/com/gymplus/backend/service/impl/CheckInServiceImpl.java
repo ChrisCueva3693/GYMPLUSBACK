@@ -94,6 +94,8 @@ public class CheckInServiceImpl implements CheckInService {
     private CheckInResponseDto toDto(CheckIn checkIn) {
         CheckInResponseDto dto = modelMapper.map(checkIn, CheckInResponseDto.class);
         dto.setIdUsuario(checkIn.getUsuario().getId());
+        dto.setUsuarioNombre(checkIn.getUsuario().getNombre() + " " + checkIn.getUsuario().getApellido());
+        dto.setUsuarioCedula(checkIn.getUsuario().getCedula());
         dto.setIdSucursal(checkIn.getSucursal().getId());
         return dto;
     }
