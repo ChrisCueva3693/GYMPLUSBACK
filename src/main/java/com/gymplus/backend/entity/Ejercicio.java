@@ -28,4 +28,7 @@ public class Ejercicio {
 
     @Column(name = "activo", nullable = false)
     private Boolean activo = true;
+
+    @Column(name = "url", length = 1000)
+    private String url;
 }
