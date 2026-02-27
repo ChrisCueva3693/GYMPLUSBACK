@@ -20,7 +20,7 @@ public class Ejercicio {
     @Column(name = "nombre", nullable = false, length = 150)
     private String nombre;
 
-    @Column(name = "descripcion", length = 255)
+    @Column(name = "descripcion", length = 600)
     private String descripcion;
 
     @Column(name = "grupo_muscular", length = 100)
