@@ -44,6 +44,18 @@ public class MobileRoutineServiceImpl implements MobileRoutineService {
         }
 
         @Override
+        public List<MobileRutinaResponseDto> getRoutinesByClientId(Long clientId) {
+                Usuario usuario = usuarioRepository.findById(clientId)
+                                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + clientId));
+
+                List<Rutina> rutinas = rutinaRepository.findByUsuarioId(usuario.getId());
+
+                return rutinas.stream()
+                                .map(this::toDto)
+                                .collect(Collectors.toList());
+        }
+
+        @Override
         public List<UsuarioResponseDto> getClientsByGimnasioId(Long gimnasioId) {
                 List<Usuario> usuarios = usuarioRepository.findByGimnasioId(gimnasioId);
 

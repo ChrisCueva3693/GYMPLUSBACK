@@ -44,6 +44,16 @@ public class MobileRoutineController {
     }
 
     /**
+     * GET /api/v1/mobile/routines/client/{clientId} — ADMIN/COACH gets routines for
+     * a specific client
+     */
+    @GetMapping("/client/{clientId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'COACH')")
+    public ResponseEntity<List<MobileRutinaResponseDto>> getRoutinesForClient(@PathVariable Long clientId) {
+        return ResponseEntity.ok(mobileRoutineService.getRoutinesByClientId(clientId));
+    }
+
+    /**
      * POST /api/v1/mobile/routines/assign — ADMIN/COACH assigns a routine to a
      * client
      */

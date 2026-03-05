@@ -8,6 +8,8 @@ import java.util.List;
 public interface MobileRoutineService {
     List<MobileRutinaResponseDto> getRoutinesByUsername(String username);
 
+    List<MobileRutinaResponseDto> getRoutinesByClientId(Long clientId);
+
     List<UsuarioResponseDto> getClientsByGimnasioId(Long gimnasioId);
 
     MobileRutinaResponseDto assignRoutine(RutinaRequestDto dto);
